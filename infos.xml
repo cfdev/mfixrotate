@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document>
+	<title><![CDATA[mfixrotate]]></title>
+	<author><![CDATA[cfdev]]></author>
+	<version>15.12</version>
+	<date>15/12/2015</date>
+	<site>http://cfdev.fr</site>
+	<description><![CDATA[Permet de tourner les images en fonction des info Exif]]></description>
+	<requirements></requirements>
+</document>
