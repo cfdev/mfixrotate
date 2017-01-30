@@ -4,8 +4,8 @@
  * Plugin mfixrotate
  *
  * @package cfdev
- * @version	1.0
- * @date	18/12/2015
+ * @version	1.1
+ * @date	29/01/2017
  * @author	Cyril Frausti
  * @url		http://cfdev.fr
  **/
@@ -44,21 +44,60 @@ class mfixrotate extends plxPlugin {
 	public function AdminMediasTop() {
 		$String = '<?php ';
 		$String .= '$selectionList["--"] = "-----"; ';
-		$String .= '$selectionList["fixrotate"] = "Rotation EXIF";';
-
+		//$String .= '$selectionList["fixrotate"] = "Rotation EXIF";';
+		$String .= '$selectionList["rotateleft"] = "Rotation gauche 90°";';
+		$String .= '$selectionList["rotateright"] = "Rotation droite 90°";';
+				
 		# Récupétion d'une instance de plxMotor
 		$String .= '$plxMotor = plxMotor::getInstance();';
 		$String .= '$plxPlugin = $plxMotor->plxPlugins->getInstance("mfixrotate");';
 	
-		# Récupération des var post
-		$String .= 'if(isset($_POST["selection"]) AND ((!empty($_POST["btn_ok"]) AND $_POST["selection"]=="fixrotate")) AND isset($_POST["idFile"])) {';
+		# Récupération des var post rotation auto EXIF
+	/*	$String .= 'if(isset($_POST["selection"]) AND ((!empty($_POST["btn_ok"]) AND $_POST["selection"]=="fixrotate")) AND isset($_POST["idFile"])) {';
 		$String .= '	if( $plxPlugin->rotateEXIF($_POST["idFile"]) ) {';
 		$String .= '		$plxMedias->makeThumbs($_POST["idFile"], $plxAdmin->aConf["miniatures_l"], $plxAdmin->aConf["miniatures_h"]);';
 		$String .= '	} ';
+		$String .= '} else';
+	*/	
+	
+		# Récupération des var post pour la rotation manuelle
+		$String .= ' if(isset($_POST["selection"]) AND ((!empty($_POST["btn_ok"]) AND $_POST["selection"]=="rotateleft")) AND isset($_POST["idFile"]) AND isset($_POST["folder"])) {';
+		$String .= '	if( $plxPlugin->rotateM($_POST["idFile"], $_POST["folder"], 90) ) {';
+		$String .= '		$plxMedias->makeThumbs($_POST["idFile"], $plxAdmin->aConf["miniatures_l"], $plxAdmin->aConf["miniatures_h"]);';
+		$String .= '	} ';
 		$String .= '} ';
-		$String .= ' ?>';	
+		$String .= 'else if(isset($_POST["selection"]) AND ((!empty($_POST["btn_ok"]) AND $_POST["selection"]=="rotateright")) AND isset($_POST["idFile"]) AND isset($_POST["folder"])) {';
+		$String .= '	if( $plxPlugin->rotateM($_POST["idFile"], $_POST["folder"], -90) ) {';
+		$String .= '		$plxMedias->makeThumbs($_POST["idFile"], $plxAdmin->aConf["miniatures_l"], $plxAdmin->aConf["miniatures_h"]);';
+		$String .= '	} ';
+		$String .= '} ';
+		$String .= ' ?>';
+
 	
 		echo  $String;
+	}
+	
+		/**
+	 * Méthode qui tourne l'image en fonction des données EXIF
+	 *
+	 * @param	files	liste des fichier à tourner
+	 * @return  true if rotate
+	 * @author	cfdev
+	 **/
+	public function rotateM($files, $folder, $deg) {		
+		// ++Limit PHP
+		//ini_set('memory_limit', '64M');
+		if($folder ==".")$folder = "";
+		foreach($files as $file) {
+			$filename = $this->imgFullPath . $folder .$file;
+			// rotate img
+			if($deg){
+				$img = imagecreatefromjpeg($filename) or die('<div class="alert red">Error rotateM::imagecreate (JPEG only)...</div> '.$filename);
+				$rotate = imagerotate($img, $deg, 0) or die('<div class="alert red">Error rotateM::imagerotate</div> '.$filename);
+				imagejpeg($rotate, "../../".$this->imgPath.$folder.$file) or die('<div class="alert red">Erreur lors de l\'enregistrement de l\'image</div> '.$file);
+				echo '<div class="alert green"> Rotation réussi ! - '.$file.' > <a href="'.$filename.'" target="_blank">Voir l\'image</a></div>';
+			}
+		}
 	}
 	
 	/**
@@ -70,9 +109,9 @@ class mfixrotate extends plxPlugin {
 	 **/
 	public function rotateEXIF($files) {
 		// ++Limit PHP
-		ini_set('memory_limit', '64M');
+		//ini_set('memory_limit', '64M');
 		foreach($files as $file) {
-			$filename = $this->imgFullPath . "/" .$file;
+			$filename = $this->imgFullPath .$file;
 			
 			$data = exif_read_data($filename, ANY_TAG, true);		
 			//plxUtils::debug($data);
@@ -97,10 +136,6 @@ class mfixrotate extends plxPlugin {
 				$rotate = imagerotate($img, $deg, 0) or die('<div class="alert red">Error rotateEXIF::imagerotate</div> '.$filename);
 				imagejpeg($rotate, "../../".$this->imgPath.$file) or die('<div class="alert red">Erreur lors de l\'enregistrement de l\'image</div> '.$file);
 				echo '<div class="alert green"> Rotation successfull!</div>';
-				return true;
-			}
-			else {
-				return false;
 			}
 		}
 	}

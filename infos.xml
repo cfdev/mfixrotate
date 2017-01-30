@@ -5,6 +5,6 @@
 	<version>15.12</version>
 	<date>15/12/2015</date>
 	<site>http://cfdev.fr</site>
-	<description><![CDATA[Permet de tourner les images en fonction des info Exif]]></description>
+	<description><![CDATA[Permet de tourner les images JPEG]]></description>
 	<requirements></requirements>
 </document>
