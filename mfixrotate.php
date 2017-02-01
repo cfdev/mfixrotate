@@ -5,7 +5,7 @@
  *
  * @package cfdev
  * @version	1.1
- * @date	29/01/2017
+ * @date	01/02/2017
  * @author	Cyril Frausti
  * @url		http://cfdev.fr
  **/
@@ -52,24 +52,13 @@ class mfixrotate extends plxPlugin {
 		$String .= '$plxMotor = plxMotor::getInstance();';
 		$String .= '$plxPlugin = $plxMotor->plxPlugins->getInstance("mfixrotate");';
 	
-		# Récupération des var post rotation auto EXIF
-	/*	$String .= 'if(isset($_POST["selection"]) AND ((!empty($_POST["btn_ok"]) AND $_POST["selection"]=="fixrotate")) AND isset($_POST["idFile"])) {';
-		$String .= '	if( $plxPlugin->rotateEXIF($_POST["idFile"]) ) {';
-		$String .= '		$plxMedias->makeThumbs($_POST["idFile"], $plxAdmin->aConf["miniatures_l"], $plxAdmin->aConf["miniatures_h"]);';
-		$String .= '	} ';
-		$String .= '} else';
-	*/	
-	
 		# Récupération des var post pour la rotation manuelle
 		$String .= ' if(isset($_POST["selection"]) AND ((!empty($_POST["btn_ok"]) AND $_POST["selection"]=="rotateleft")) AND isset($_POST["idFile"]) AND isset($_POST["folder"])) {';
-		$String .= '	if( $plxPlugin->rotateM($_POST["idFile"], $_POST["folder"], 90) ) {';
-		$String .= '		$plxMedias->makeThumbs($_POST["idFile"], $plxAdmin->aConf["miniatures_l"], $plxAdmin->aConf["miniatures_h"]);';
-		$String .= '	} ';
+		$String .= '	$plxPlugin->rotateM($_POST["idFile"], $_POST["folder"], 90) ;';	
 		$String .= '} ';
+		
 		$String .= 'else if(isset($_POST["selection"]) AND ((!empty($_POST["btn_ok"]) AND $_POST["selection"]=="rotateright")) AND isset($_POST["idFile"]) AND isset($_POST["folder"])) {';
-		$String .= '	if( $plxPlugin->rotateM($_POST["idFile"], $_POST["folder"], -90) ) {';
-		$String .= '		$plxMedias->makeThumbs($_POST["idFile"], $plxAdmin->aConf["miniatures_l"], $plxAdmin->aConf["miniatures_h"]);';
-		$String .= '	} ';
+		$String .= '	$plxPlugin->rotateM($_POST["idFile"], $_POST["folder"], -90) ;';
 		$String .= '} ';
 		$String .= ' ?>';
 
@@ -78,7 +67,7 @@ class mfixrotate extends plxPlugin {
 	}
 	
 		/**
-	 * Méthode qui tourne l'image en fonction des données EXIF
+	 * Méthode qui tourne l'image manuellement
 	 *
 	 * @param	files	liste des fichier à tourner
 	 * @return  true if rotate
@@ -87,17 +76,51 @@ class mfixrotate extends plxPlugin {
 	public function rotateM($files, $folder, $deg) {		
 		// ++Limit PHP
 		//ini_set('memory_limit', '64M');
+		$ret = false;
 		if($folder ==".")$folder = "";
 		foreach($files as $file) {
 			$filename = $this->imgFullPath . $folder .$file;
 			// rotate img
 			if($deg){
-				$img = imagecreatefromjpeg($filename) or die('<div class="alert red">Error rotateM::imagecreate (JPEG only)...</div> '.$filename);
+				
+				# recupère les info qu'on a une image
+				$info = getimagesize($filename);
+				if (!$info) return false;
+				
+				# Création de l'image
+				switch ($info['mime']) {
+					case 'image/jpeg':
+						$img = imagecreatefromjpeg($filename) or die('<div class="alert red">Error rotateM::imagecreatefromjpeg ...</div> '.$filename);
+					break;
+					case 'image/png':
+						$img = imagecreatefrompng($filename) or die('<div class="alert red">Error rotateM::imagecreatefrompng ...</div> '.$filename);
+					break;
+					case 'image/gif':
+						$img = imagecreatefromgif($filename) or die('<div class="alert red">Error rotateM::imagecreatefromgif ...</div> '.$filename);
+					break;
+					default:
+						$ret = false;
+					break;
+				}
+		
+				# Rotation de l'image
 				$rotate = imagerotate($img, $deg, 0) or die('<div class="alert red">Error rotateM::imagerotate</div> '.$filename);
 				imagejpeg($rotate, "../../".$this->imgPath.$folder.$file) or die('<div class="alert red">Erreur lors de l\'enregistrement de l\'image</div> '.$file);
 				echo '<div class="alert green"> Rotation réussi ! - '.$file.' > <a href="'.$filename.'" target="_blank">Voir l\'image</a></div>';
+				
+				# regeneration des miniatures
+				$thumName = plxUtils::thumbName($file);
+				plxUtils::makeThumb($filename, "../../".$this->imgPath.$folder.$thumName, $plxAdmin->aConf["miniatures_l"], $plxAdmin->aConf["miniatures_h"]);
+				# Pour le gestionnaire de média
+				plxUtils::makeThumb($filename, "../../".$this->imgPath.'.thumbs/'.$folder.$file, 48, 48);
+				
+				$ret = true;
+			}
+			else{
+				$ret = false;
 			}
 		}
+		return $ret;
 	}
 	
 	/**
@@ -109,7 +132,7 @@ class mfixrotate extends plxPlugin {
 	 **/
 	public function rotateEXIF($files) {
 		// ++Limit PHP
-		//ini_set('memory_limit', '64M');
+		/*//ini_set('memory_limit', '64M');
 		foreach($files as $file) {
 			$filename = $this->imgFullPath .$file;
 			
@@ -137,7 +160,7 @@ class mfixrotate extends plxPlugin {
 				imagejpeg($rotate, "../../".$this->imgPath.$file) or die('<div class="alert red">Erreur lors de l\'enregistrement de l\'image</div> '.$file);
 				echo '<div class="alert green"> Rotation successfull!</div>';
 			}
-		}
+		}*/
 	}
 }
 ?>

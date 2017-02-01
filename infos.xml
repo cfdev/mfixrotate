@@ -2,9 +2,9 @@
 <document>
 	<title><![CDATA[mfixrotate]]></title>
 	<author><![CDATA[cfdev]]></author>
-	<version>15.12</version>
-	<date>15/12/2015</date>
+	<version>17.02</version>
+	<date>01/02/2015</date>
 	<site>http://cfdev.fr</site>
-	<description><![CDATA[Permet de tourner les images JPEG]]></description>
+	<description><![CDATA[Permet de tourner les images]]></description>
 	<requirements></requirements>
 </document>
